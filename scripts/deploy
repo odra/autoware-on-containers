@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SCRIPT_DIR="${0%/*}"
+LIB_DIR="$SCRIPT_DIR/lib"
+
+NAMESPACE=default
+
+source $LIB_DIR/kube.sh
+
+# cyclonedds configmap
+kubectl::exists "$NAMESPACE" "configmap/cyclonedds"
+if [ "$?" == "0" ]; then
+    kubectl::delete "$NAMESPACE" "configmap/cyclonedds"  
+fi
+kubectl::create "$NAMESPACE" "configmap" "cyclonedds"  "--from-file=cyclonedds.xml=files/etc/cyclonedds/cyclonedds.xml"
+
+# autoware-open-adkit-map deployment
+kubectl::exists "$NAMESPACE" "pod/autoware-open-adkit-map"
+if [ "$?" == "0" ]; then
+    kubectl::delete "$NAMESPACE" "pod/autoware-open-adkit-map"
+fi
+kubectl::apply "$NAMESPACE" "kube/deployment-map.yml"

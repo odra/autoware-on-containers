@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: autoware-open-adkit-map
+  name: autoware-open-adkit-map
+spec:
+  hostNetwork: true
+  initContainers:
+    - name: map-data
+      image: quay.io/lrossett/autoware-adkit-map-data:latest
+      command:
+        - /bin/bash
+      args:
+        - -c
+        - "cp /etc/autoware-open-adkit/map/* /map"
+      volumeMounts:
+        - name: map
+          mountPath: /map
+  containers:
+    - name: app
+      image: ghcr.io/autowarefoundation/autoware-universe:humble-latest-prebuilt
+      securityContext:
+        seLinuxOptions:
+          type: 'spc_t'
+      resources:
+        limits:
+          cpu: "1"
+          memory: "512Mi"
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
+      env:
+        - name: MAP_DIR
+          value: /map
+        - name: POINTCLOUD_LOADER
+          value: install/map_loader/share/map_loader/config/pointcloud_map_loader.param.yaml
+        - name: LANELET2_LOADER
+          value: install/map_loader/share/map_loader/config/lanelet2_map_loader.param.yaml
+        - name: CYCLONEDDS_URI
+          value: file:///etc/cyclonedds/cyclonedds.xml
+        - name: RMW_IMPLEMENTATION
+          value: rmw_cyclonedds_cpp
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - |-
+            source install/setup.bash; 
+            ros2 launch tier4_map_launch map.launch.py \
+            map_path:=$MAP_DIR \
+            pointcloud_map_loader_param_path:=$POINTCLOUD_LOADER \
+            lanelet2_map_loader_param_path:=$LANELET2_LOADER 
+      volumeMounts:
+        - name: tmpfs
+          mountPath: /tmp
+        - name: cyclonedds
+          mountPath: /etc/cyclonedds
+        - name: map
+          mountPath: /map
+  volumes:
+    - name: tmpfs
+      emptyDir: {}
+    - name: cyclonedds
+      configMap:
+        name: cyclonedds
+    - name: map
+      emptyDir: {}

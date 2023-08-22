@@ -1,0 +1,11 @@
+FROM registry.fedoraproject.org/fedora:38
+
+ARG RELEASE=main
+
+RUN mkdir -p /etc/autoware-open-adkit/map
+
+RUN ( \
+    cd /etc/autoware-open-adkit/map; \
+    curl -LO https://gitlab.com/autowarefoundation/autoware_reference_design/-/raw/${RELEASE}/docs/Appendix/Open-AD-Kit-Start-Guide/map/kashiwanoha/lanelet2_map.osm; \
+    curl -LO https://gitlab.com/autowarefoundation/autoware_reference_design/-/raw/${RELEASE}/docs/Appendix/Open-AD-Kit-Start-Guide/map/kashiwanoha/pointcloud_map.pcd; \
+)
