@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: autoware-open-adkit-system
+  name: autoware-open-adkit-system
+spec:
+  hostNetwork: true
+  containers:
+    - name: app
+      image: ghcr.io/autowarefoundation/autoware-universe:humble-latest-prebuilt
+      securityContext:
+        seLinuxOptions:
+          type: 'spc_t'
+      resources:
+        limits:
+          cpu: "1"
+          memory: "512Mi"
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
+      env:
+        - name: CYCLONEDDS_URI
+          value: file:///etc/cyclonedds/cyclonedds.xml
+        - name: RMW_IMPLEMENTATION
+          value: rmw_cyclonedds_cpp
+        - name: SENSOR_MODEL
+          value: sample_vehicle
+        - name: RUN_MODE
+          value: planning_simulation
+        - name: LAUNCH_DIAG_PUB
+          value: "false"
+        - name: LAUNCH_SYSTEM_MONITOR
+          value: "false" 
+        - name: STATE_MONITOR_TOPIC_CONFIG
+          value: install/component_state_monitor/share/component_state_monitor/config/topics.yaml
+        - name: EMERGENCY_HANDLER_PARAM
+          value: install/emergency_handler/share/emergency_handler/config/emergency_handler.param.yaml
+        - name: MRM_COMFORTABLE_STOP_OPERATOR_PARAM
+          value: install/mrm_comfortable_stop_operator/share/mrm_comfortable_stop_operator/config/mrm_comfortable_stop_operator.param.yaml
+        - name: MRM_EMERGENCY_STOP_OPERATOR_PARAM
+          value: install/mrm_emergency_stop_operator/share/mrm_emergency_stop_operator/config/mrm_emergency_stop_operator.param.yaml
+        - name: SYSTEM_ERROR_MONITOR_PARAM
+          value: install/autoware_launch/share/autoware_launch/config/system/system_error_monitor/system_error_monitor.param.yaml
+        - name: SYSTEM_ERROR_MONITOR_PLANNING_SIMULATOR
+          value: install/system_error_monitor/share/system_error_monitor/config/system_error_monitor.planning_simulation.param.yaml
+        - name: DIAGNOSTIC_AGGREGATOR_SYSTEM_PARAM
+          value: install/autoware_launch/share/autoware_launch/config/system/system_error_monitor/diagnostic_aggregator/system.param.yaml
+        - name: DIAGNOSTIC_VEHICLE_SYSTEM_PARAM
+          value: install/system_error_monitor/share/system_error_monitor/config/diagnostic_aggregator/vehicle.param.yaml
+        - name: DUMMY_DIAG_PUBLISHER_PARAM
+          value: innstall/dummy_diag_publisher/share/dummy_diag_publisher/config/dummy_diag_publisher.param.yaml
+        - name: SYSTEM_MONITOR_CPU_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/cpu_monitor.param.yaml
+        - name: SYSTEM_MONITOR_GPU_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/gpu_monitor.param.yaml
+        - name: SYSTEM_MONITOR_HDD_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/hdd_monitor.param.yaml
+        - name: SYSTEM_MONITOR_MEM_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/mem_monitor.param.yaml
+        - name: SYSTEM_MONITOR_NET_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/net_monitor.param.yaml
+        - name: SYSTEM_MONITOR_NTP_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/ntp_monitor.param.yaml
+        - name: SYSTEM_MONITOR_PROCESS_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/process_monitor.param.yaml
+        - name: SYSTEM_MONITOR_VOLTAGE_MONITOR_PARAM
+          value: install/system_monitor/share/system_monitor/config/voltage_monitor.param.yaml
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - |-
+            source install/setup.bash;
+            ros2 launch tier4_system_launch \
+            system.launch.xml \
+            sensor_model:=$SENSOR_MODEL \
+            run_mode:=$RUN_MODE \
+            launch_dummy_diag_publisher:=$LAUNCH_DIAG_PUB \
+            launch_system_monitor:=$LAUNCH_SYSTEM_MONITOR \
+            component_state_monitor_topic_path:=$STATE_MONITOR_TOPIC_CONFIG \
+            emergency_handler_param_path:=$EMERGENCY_HANDLER_PARAM \
+            mrm_comfortable_stop_operator_param_path:=$MRM_COMFORTABLE_STOP_OPERATOR_PARAM \
+            mrm_emergency_stop_operator_param_path:=$MRM_EMERGENCY_STOP_OPERATOR_PARAM \
+            system_error_monitor_param_path:=$SYSTEM_ERROR_MONITOR_PARAM \
+            system_error_monitor_planning_simulator_param_path:=$SYSTEM_ERROR_MONITOR_PLANNING_SIMULATOR \
+            diagnostic_aggregator_system_param_path:=$DIAGNOSTIC_AGGREGATOR_SYSTEM_PARAM \
+            diagnostic_aggregator_vehicle_param_path:=$DIAGNOSTIC_VEHICLE_SYSTEM_PARAM \
+            dummy_diag_publisher_param_path:=$DUMMY_DIAG_PUBLISHER_PARAM \
+            system_monitor_cpu_monitor_param_path:=$SYSTEM_MONITOR_CPU_MONITOR_PARAM \
+            system_monitor_gpu_monitor_param_path:=$SYSTEM_MONITOR_GPU_MONITOR_PARAM \
+            system_monitor_hdd_monitor_param_path:=$SYSTEM_MONITOR_HDD_MONITOR_PARAM \
+            system_monitor_mem_monitor_param_path:=$SYSTEM_MONITOR_MEM_MONITOR_PARAM \
+            system_monitor_net_monitor_param_path:=$SYSTEM_MONITOR_NET_MONITOR_PARAM \
+            system_monitor_ntp_monitor_param_path:=$SYSTEM_MONITOR_NTP_MONITOR_PARAM \
+            system_monitor_process_monitor_param_path:=$SYSTEM_MONITOR_PROCESS_MONITOR_PARAM \
+            system_monitor_voltage_monitor_param_path:=$SYSTEM_MONITOR_VOLTAGE_MONITOR_PARAM
+      volumeMounts:
+        - name: tmpfs
+          mountPath: /tmp
+        - name: cyclonedds
+          mountPath: /etc/cyclonedds
+  volumes:
+    - name: tmpfs
+      emptyDir: {}
+    - name: cyclonedds
+      configMap:
+        name: cyclonedds

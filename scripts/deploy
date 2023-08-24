@@ -20,3 +20,10 @@ if [ "$?" == "0" ]; then
     kubectl::delete "$NAMESPACE" "pod/autoware-open-adkit-map"
 fi
 kubectl::apply "$NAMESPACE" "kube/deployment-map.yml"
+
+# autoware-open-adkit-system deployment
+kubectl::exists "$NAMESPACE" "pod/autoware-open-adkit-system"
+if [ "$?" == "0" ]; then
+    kubectl::delete "$NAMESPACE" "pod/autoware-open-adkit-system"
+fi
+kubectl::apply "$NAMESPACE" "kube/deployment-system.yml"
